@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/drunge-kutta
+drunge-kutta.so
+drunge-kutta.dylib
+drunge-kutta.dll
+drunge-kutta.a
+drunge-kutta.lib
+drunge-kutta-test-*
+*.exe
+*.o
+*.obj
+*.lst

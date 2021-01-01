@@ -241,50 +241,50 @@ Revisions
 Tuple!(real[], real[][]) dopri(mfun fxy, real x0, real[] y0, real x1, real tol,
         real hmax, real hmin, uint maxiter, real[] args = [])
 {
-    enum real a21 = (1.0 / 5.0);
-    enum real a31 = (3.0 / 40.0);
-    enum real a32 = (9.0 / 40.0);
-    enum real a41 = (44.0 / 45.0);
-    enum real a42 = (-56.0 / 15.0);
-    enum real a43 = (32.0 / 9.0);
-    enum real a51 = (19_372.0 / 6561.0);
-    enum real a52 = (-25_360.0 / 2187.0);
-    enum real a53 = (64448.0 / 6561.0);
-    enum real a54 = (-212.0 / 729.0);
-    enum real a61 = (9017.0 / 3168.0);
-    enum real a62 = (-355.0 / 33.0);
-    enum real a63 = (46732.0 / 5247.0);
-    enum real a64 = (49.0 / 176.0);
-    enum real a65 = (-5103.0 / 18656.0);
-    enum real a71 = (35.0 / 384.0);
-    enum real a72 = (0.0);
-    enum real a73 = (500.0 / 1113.0);
-    enum real a74 = (125.0 / 192.0);
-    enum real a75 = (-2187.0 / 6784.0);
-    enum real a76 = (11.0 / 84.0);
+    immutable real a21 = (1.0 / 5.0);
+    immutable real a31 = (3.0 / 40.0);
+    immutable real a32 = (9.0 / 40.0);
+    immutable real a41 = (44.0 / 45.0);
+    immutable real a42 = (-56.0 / 15.0);
+    immutable real a43 = (32.0 / 9.0);
+    immutable real a51 = (19_372.0 / 6561.0);
+    immutable real a52 = (-25_360.0 / 2187.0);
+    immutable real a53 = (64448.0 / 6561.0);
+    immutable real a54 = (-212.0 / 729.0);
+    immutable real a61 = (9017.0 / 3168.0);
+    immutable real a62 = (-355.0 / 33.0);
+    immutable real a63 = (46732.0 / 5247.0);
+    immutable real a64 = (49.0 / 176.0);
+    immutable real a65 = (-5103.0 / 18656.0);
+    immutable real a71 = (35.0 / 384.0);
+    immutable real a72 = (0.0);
+    immutable real a73 = (500.0 / 1113.0);
+    immutable real a74 = (125.0 / 192.0);
+    immutable real a75 = (-2187.0 / 6784.0);
+    immutable real a76 = (11.0 / 84.0);
 
-    enum real c2 = (1.0 / 5.0);
-    enum real c3 = (3.0 / 10.0);
-    enum real c4 = (4.0 / 5.0);
-    enum real c5 = (8.0 / 9.0);
-    enum real c6 = (1.0);
-    enum real c7 = (1.0);
+    immutable real c2 = (1.0 / 5.0);
+    immutable real c3 = (3.0 / 10.0);
+    immutable real c4 = (4.0 / 5.0);
+    immutable real c5 = (8.0 / 9.0);
+    immutable real c6 = (1.0);
+    immutable real c7 = (1.0);
 
-    enum real b1 = (35.0 / 384.0);
-    enum real b2 = (0.0);
-    enum real b3 = (500.0 / 1113.0);
-    enum real b4 = (125.0 / 192.0);
-    enum real b5 = (-2187.0 / 6784.0);
-    enum real b6 = (11.0 / 84.0);
-    enum real b7 = (0.0);
+    immutable real b1 = (35.0 / 384.0);
+    immutable real b2 = (0.0);
+    immutable real b3 = (500.0 / 1113.0);
+    immutable real b4 = (125.0 / 192.0);
+    immutable real b5 = (-2187.0 / 6784.0);
+    immutable real b6 = (11.0 / 84.0);
+    immutable real b7 = (0.0);
 
-    enum real b1p = (5179.0 / 57_600.0);
-    enum real b2p = (0.0);
-    enum real b3p = (7571.0 / 16_695.0);
-    enum real b4p = (393.0 / 640.0);
-    enum real b5p = (-92_097.0 / 339_200.0);
-    enum real b6p = (187.0 / 2100.0);
-    enum real b7p = (1.0 / 40.0);
+    immutable real b1p = (5179.0 / 57_600.0);
+    immutable real b2p = (0.0);
+    immutable real b3p = (7571.0 / 16_695.0);
+    immutable real b4p = (393.0 / 640.0);
+    immutable real b5p = (-92_097.0 / 339_200.0);
+    immutable real b6p = (187.0 / 2100.0);
+    immutable real b7p = (1.0 / 40.0);
 
     real[] K1, K2, K3, K4, K5, K6, K7;
     real x = x0;
@@ -342,7 +342,7 @@ Tuple!(real[], real[][]) dopri(mfun fxy, real x0, real[] y0, real x1, real tol,
         {
             x += h;
             y[] += h * (b1 * K1[] + b3 * K3[] + b4 * K4[] + b5 * K5[] + b6 * K6[]);
-            writeln(y, h, K2, "\n");
+            // writeln(y, h, K2, "\n");
             yout ~= y;
             tout ~= x;
         }
@@ -416,3 +416,9 @@ unittest
     auto res = dopri(&fxy, x0, y0, x1, tol, hmax, hmin, maxiter, [0.1, 0.1, 14]);
     // writeln(res[1]);
 }
+
+
+/*
+Runge-Kutta Cash-Karp
+*/
+

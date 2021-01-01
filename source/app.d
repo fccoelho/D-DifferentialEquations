@@ -54,7 +54,7 @@ void sir(string method="rk4"){
     real[] inits = [1.0, 0.001, 0.0];
     real[] times;
     times ~= 0;
-    foreach (i; 0 .. 10000)
+    foreach (i; 0 .. 10_000)
     {
         times ~= times[$ - 1] + 0.01;
     }
@@ -68,14 +68,14 @@ void sir(string method="rk4"){
 unittest{
 
 }
-
+/**example 1*/
 void example_1()
 {
     writeln("Example dodeint run.");
     real[] fun(real t, real[] Y, real[] P)
     {
-        auto u = Y[0];
-        auto v = Y[1];
+        const auto u = Y[0];
+        const auto v = Y[1];
         real[] dy = [0, 0];
         dy[0] += u - u ^^ 3 - v;
         dy[1] += P[0] * (u - P[1] * v - P[2]);
@@ -133,7 +133,7 @@ void main()
 {
 
     rossler("rk4");
-    sir("rk4");
+    sir("dopri");
     // example_1();
     // auto dmd = execute(["graph", "-T", "res.csv"]);
 }

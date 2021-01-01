@@ -13,3 +13,4 @@ drunge-kutta-test-*
 *.o
 *.obj
 *.lst
+.idea/

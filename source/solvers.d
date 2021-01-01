@@ -4,14 +4,36 @@ import std.range;
 import std.array : array;
 import std.algorithm;
 import std.exception;
+import std.typecons : tuple, Tuple;
 import std.datetime.stopwatch;
-
-// import mir.ndslice;
+import std.string;
 
 /// function signature: F(t, y)
 alias mfun = real[]delegate(real, real[], real[]) pure nothrow @safe;
+
+Tuple!(real[], real[][]) odeint(mfun f, real[] y0, real[] times, real[] args = [
+        ], string method="rk4", real tol = 1e-6, real hmax = 0,
+        real hmin = 1e-6, uint maxiter = 1000)
+{
+    Tuple!(real[], real[][]) res;
+    if (hmax == 0){
+        hmax = hmin;
+    }
+
+    if (method == "rk4")
+    {
+        res = rk4(f, y0, times, tol, args = args,);
+    }
+    else if (method == "dopri")
+    {
+        res = dopri(f, times[0], y0, times[$ - 1], tol = tol, hmax = hmax,
+                hmin = hmin, maxiter = maxiter, args = args);
+    }
+    return res;
+}
+
 /**
-Runge-kutta step
+Runge-kutta 4th order step
 */
 real[] rk4Step(mfun f, real x, real[] y, real h, real[] k1, real[] args) pure nothrow @safe
 {
@@ -57,12 +79,16 @@ times - times for the solutions
 tol - error tolerance
 args - parameters to be passed to f
 */
-real[][] dodeint(mfun f, real[] y0, real[] times, real tol = 1e-6, real[] args = []) pure @safe
+Tuple!(real[], real[][]) rk4(mfun f, real[] y0, real[] times, const real tol = 1e-6, real[] args = [
+        ]) @safe
 {
     real[][] yout;
+    real[] tout;
     yout ~= y0;
+
     auto h = times[1] - times[0];
     auto immutable hmax = abs(times[$ - 1] - times[0]);
+    real hmin = tol;
 
     auto ycurr = y0;
     auto ylast = y0;
@@ -72,33 +98,44 @@ real[][] dodeint(mfun f, real[] y0, real[] times, real tol = 1e-6, real[] args =
     auto tlast = times[0];
     auto fcurr = f(tcurr, ycurr, args);
     auto flast = f(tcurr, ycurr, args);
-    real totalerr, steperr, scale = 0.0;
+    real totalerr, steperr, scale;
     real totalvar = 0.0;
 
     foreach (immutable i, t; times[1 .. $])
     {
-        while ((t - tcurr) * h > 1e-16)
+        steperr = 2 * tol;
+        while ((t - tcurr) * h > 0)
         {
+            // writeln(steperr > tol, ' ', steperr-tol,' ',t);
             auto const k1 = rk4Step(f, tcurr, ycurr, h, fcurr, args);
             auto k2 = rk4TwoStep(f, tcurr, ycurr, h, fcurr, args);
 
-            scale = k2.map!abs.maxElement; 
+            scale = k2.map!abs.maxElement;
+            /// steperr = max(abs(k1-k2))/2
             auto err = k1.dup;
             err[] -= k2[]; // error = k1-k2 
-            steperr = err.map!abs.maxElement / 2; 
+            steperr = err.map!abs.maxElement / 2;
+            // if (steperr>0){
+            //     writefln("t: %s, Err: %s, tol: %s, tcurr: %s, h: %s",t,steperr, tol, tcurr, h);
+            // }
             /// compute the ideal step size factor and sanitize the result to prevent ridiculous changes
-            auto hfac = ((tol * scale) / (1e-16 + steperr)) ^^ 0.20;
-            hfac = min(10, max(0.001, hfac));
+            auto hfac = ((tol * scale) / (steperr)) ^^ 0.25;
+            hfac = min(10, max(0.01, hfac));
+            // writeln(t, ' ', hfac, " ", steperr);
             /// repeat the step if there is a significant step size correction
             if (abs(h * hfac) < hmax && ((0.6 > hfac) || (hfac > 3)))
             {
                 // recompute with new step size
-                h *= hfac;
+                h = max(hmin, h * hfac);
                 k2 = rk4TwoStep(f, tcurr, ycurr, h, fcurr, args);
             }
             // update and cycle the integration points
             ylast = ycurr.dup;
             ycurr[] += h * k2[];
+            if (ycurr.any!isNaN)
+            {
+                writeln(h, k2);
+            }
             tlast = tcurr;
             tcurr += h;
             // writefln("ycurr: %s, tcurr: %s, h: %s", ycurr,tcurr,h);
@@ -115,14 +152,19 @@ real[][] dodeint(mfun f, real[] y0, real[] times, real tol = 1e-6, real[] args =
             //auto reportstr = "internal step to t=%12.8f \t" % tcurr;
         }
         //now tlast <= t <= tcurr, can interpolate the value for yout[i+1] using the cubic Bezier formula
+        // writefln("Accepted step: t: %s, y: %s, Err: %s", tcurr, ycurr, steperr);
         auto s = (t - tlast) / (tcurr - tlast);
         auto res = ylast.dup;
         res[] *= 0;
         res[] += (1 - s) ^^ 2 * ((1 - s) * ylast[] + 3 * s * qlast[]) + s ^^ 2 * (
                 3 * (1 - s) * qcurr[] + s * ycurr[]);
+        // if (res.any!isNaN){
+        //         writefln("h: %s, s: %s, Err: %s, (tcurr-tlast): %s, (t-tlast): %s",h,s, steperr, tcurr-tlast,t-tlast);
+        //         }
         yout ~= res;
+        tout ~= tcurr;
     }
-    return yout;
+    return tuple(tout, yout);
 }
 
 unittest
@@ -149,14 +191,14 @@ unittest
         times ~= times[$ - 1] + 0.1;
     }
 
-    auto res = dodeint(&fun, inits, times, 1e-6, [epsilon, b, c]);
+    auto res = rk4(&fun, inits, times, 1e-6, [epsilon, b, c]);
     // writeln(res);
 
 }
 
 /**
 Synopsis
-	  real odedopri(real[] fxy(double x, double y),
+	  real dopri(real[] fxy(double x, double y),
 					  double x0, double y0, double x1, double tol,
 					  double hmax,  double hmin, int maxiter)
  
@@ -179,7 +221,7 @@ Return value
 	  value of y at last step x
  
 Description
-	  The routine odedopri() implements the Dormand-Prince method of
+	  The routine dopri() implements the Dormand-Prince method of
 	  solving an ordinary differential equation of the first order
 	  y' = f(x,y).
  
@@ -196,8 +238,8 @@ WARNING
 Revisions
 	  1998.05.02	  first version
 */
-real[][] odedopri(mfun fxy, real x0, real[] y0, real x1, real tol, real hmax,
-        real hmin, uint maxiter, real[] args = [])
+Tuple!(real[], real[][]) dopri(mfun fxy, real x0, real[] y0, real x1, real tol,
+        real hmax, real hmin, uint maxiter, real[] args = [])
 {
     enum real a21 = (1.0 / 5.0);
     enum real a31 = (3.0 / 40.0);
@@ -205,8 +247,8 @@ real[][] odedopri(mfun fxy, real x0, real[] y0, real x1, real tol, real hmax,
     enum real a41 = (44.0 / 45.0);
     enum real a42 = (-56.0 / 15.0);
     enum real a43 = (32.0 / 9.0);
-    enum real a51 = (19372.0 / 6561.0);
-    enum real a52 = (-25360.0 / 2187.0);
+    enum real a51 = (19_372.0 / 6561.0);
+    enum real a52 = (-25_360.0 / 2187.0);
     enum real a53 = (64448.0 / 6561.0);
     enum real a54 = (-212.0 / 729.0);
     enum real a61 = (9017.0 / 3168.0);
@@ -236,26 +278,29 @@ real[][] odedopri(mfun fxy, real x0, real[] y0, real x1, real tol, real hmax,
     enum real b6 = (11.0 / 84.0);
     enum real b7 = (0.0);
 
-    enum real b1p = (5179.0 / 57600.0);
+    enum real b1p = (5179.0 / 57_600.0);
     enum real b2p = (0.0);
-    enum real b3p = (7571.0 / 16695.0);
+    enum real b3p = (7571.0 / 16_695.0);
     enum real b4p = (393.0 / 640.0);
-    enum real b5p = (-92097.0 / 339200.0);
+    enum real b5p = (-92_097.0 / 339_200.0);
     enum real b6p = (187.0 / 2100.0);
     enum real b7p = (1.0 / 40.0);
 
     real[] K1, K2, K3, K4, K5, K6, K7;
-    auto x = x0;
-    auto y = y0;
+    real x = x0;
+    auto y = y0.dup;
     auto h = hmax;
     auto iter = maxiter;
     real[][] yout;
     yout ~= y0;
+    real[] tout;
+    tout ~= x0;
 
     while (x < x1)
     {
         /* Compute the function values */
         K1 = fxy(x, y, args);
+        // writeln(K1, ' ', x);
         auto y1 = y.dup;
         y1[] += h * (a21 * K1[]);
         K2 = fxy(x + c2 * h, y1, args);
@@ -281,7 +326,7 @@ real[][] odedopri(mfun fxy, real x0, real[] y0, real x1, real tol, real hmax,
         error[] += (b3 - b3p) * K3[] + (b4 - b4p) * K4[];
         error[] += (b5 - b5p) * K5[] + (b6 - b6p) * K6[] + (b7 - b7p) * K7[];
         error = error.map!abs.array;
-        
+
         // error control
         // auto delta = error.dup;
         // delta[] *= 0;
@@ -290,15 +335,16 @@ real[][] odedopri(mfun fxy, real x0, real[] y0, real x1, real tol, real hmax,
         // {
         //     el = 0.84 * pow(tol / (el+1e-16), 1 / 5.0);
         // }
-        
-        auto delta = 0.84 * pow(tol /(error.mean+1e-16), (1.0 / 5.0));
+
+        auto delta = 0.84 * pow(tol / (error.maxElement + 1e-16), (1.0 / 4.0));
         // writeln(error,h,delta);
         if (error.mean < tol)
         {
             x += h;
             y[] += h * (b1 * K1[] + b3 * K3[] + b4 * K4[] + b5 * K5[] + b6 * K6[]);
-            writeln(y, h, "\n");
+            writeln(y, h, K2, "\n");
             yout ~= y;
+            tout ~= x;
         }
 
         if (delta <= 0.1)
@@ -311,7 +357,7 @@ real[][] odedopri(mfun fxy, real x0, real[] y0, real x1, real tol, real hmax,
         }
         else
         {
-            h = delta * h;
+            h *= delta;
         }
 
         if (h > hmax)
@@ -343,7 +389,7 @@ real[][] odedopri(mfun fxy, real x0, real[] y0, real x1, real tol, real hmax,
         uint flag = 2;
     }
 
-    return yout;
+    return tuple(tout, yout);
 }
 
 unittest
@@ -366,7 +412,7 @@ unittest
         dy[2] += P[1] + z * (x - P[2]);
         return dy;
     }
-    
-    auto res = odedopri(&fxy, x0, y0, x1, tol, hmax, hmin, maxiter, [0.1, 0.1, 14]);
-    // writeln(res);
+
+    auto res = dopri(&fxy, x0, y0, x1, tol, hmax, hmin, maxiter, [0.1, 0.1, 14]);
+    // writeln(res[1]);
 }

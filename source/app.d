@@ -57,7 +57,7 @@ void sir(string method="rk4"){
     real[] inits = [1.0, 0.001, 0.0];
     real[] times;
     times ~= 0;
-    foreach (i; 0 .. 10_000)
+    foreach (i; 0 .. 50_000)
     {
         times ~= times[$ - 1] + 0.01;
     }
@@ -135,8 +135,8 @@ void rossler(string method = "rk4")
 void main()
 {
 
-    rossler("rk4");
-    sir("dopri");
+    rossler("rk4"); //it's a stiff proplem so it won't work with the rk4 method
+    sir("rk4");
     // example_1();
     // auto dmd = execute(["graph", "-T", "res.csv"]);
 }

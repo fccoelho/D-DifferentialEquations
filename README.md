@@ -23,6 +23,15 @@ Or, to sun some early benchmarks:
 dub
 ```
 
+You can also validate the implemented models against Scipy's `odeint`. This script calculates the mean-squared-error between the two solutions:
+
+```bash
+$ python validate.py
+SIR MSE:  1.3638751214735066e-05
+```
+![SIR](validate_sir.png)
+
+
 ## Contributing
 I have no intentions of moving this library forward on my own, so any help is very much welcome! just open an issue with some topic you would like to contribute, fork the repo and start to work!
 

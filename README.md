@@ -29,7 +29,7 @@ You can also validate the implemented models against Scipy's `odeint`. This scri
 $ python validate.py
 SIR MSE:  1.3638751214735066e-05
 ```
-![SIR](https://github.com/fccoelho/D-DifferentialEquations/blob/master/validate_sir.png)
+![SIR](validate_sir.png)
 
 
 ## Contributing

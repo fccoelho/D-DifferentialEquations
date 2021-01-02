@@ -25,3 +25,5 @@ dub
 
 ## Contributing
 I have no intentions of moving this library forward on my own, so any help is very much welcome! just open an issue with some topic you would like to contribute, fork the repo and start to work!
+
+We have also enabled [discussions](https://github.com/fccoelho/D-DifferentialEquations/discussions) here, have a try!

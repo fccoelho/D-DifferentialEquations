@@ -5,9 +5,11 @@
 	"copyright": "Copyright © 2020, Flávio Codeco Coelho",
 	"dependencies": {
 		"mir": "~>3.2.2",
+		"mir-algorithm": "~>3.10.16",
+		"mir-core": "~>1.1.58",
 		"silly": "~>1.0.2"
 	},
 	"description": "A prototype D Runge-kutta implementation with adaptive step sizes.",
-	"license": "gpl3",
+	"license": "GPL-3.0",
 	"name": "drunge-kutta"
 }

@@ -1,3 +1,5 @@
+module solvers;
+
 import std.stdio;
 import std.math;
 import std.range;
@@ -8,15 +10,19 @@ import std.typecons : tuple, Tuple;
 import std.datetime.stopwatch;
 import std.string;
 
-/// function signature: F(t, y)
+/// Model function signature: F(t, y)
 alias mfun = real[]delegate(real, real[], real[]) pure nothrow @safe;
 
+/**
+Unified interface function for all implemented solvers.
+*/
 Tuple!(real[], real[][]) odeint(mfun f, real[] y0, real[] times, real[] args = [
-        ], string method="rk4", real tol = 1e-6, real hmax = 0,
-        real hmin = 1e-6, uint maxiter = 1000)
+        ], string method = "rk4", real tol = 1e-6, real hmax = 0, real hmin = 1e-6,
+        uint maxiter = 1000)
 {
     Tuple!(real[], real[][]) res;
-    if (hmax == 0){
+    if (hmax == 0)
+    {
         hmax = hmin;
     }
 
@@ -167,6 +173,7 @@ Tuple!(real[], real[][]) rk4(mfun f, real[] y0, real[] times, const real tol = 1
     return tuple(tout, yout);
 }
 
+@("rk4 basic test")
 unittest
 {
     real epsilon = 0.1;
@@ -239,7 +246,7 @@ Revisions
 	  1998.05.02	  first version
 */
 Tuple!(real[], real[][]) dopri(mfun fxy, real x0, real[] y0, real x1, real tol,
-        real hmax, real hmin, uint maxiter, real[] args = [])
+        real hmax, real hmin, uint maxiter, real[] args = []) @safe
 {
     immutable real a21 = (1.0 / 5.0);
     immutable real a31 = (3.0 / 40.0);
@@ -392,7 +399,8 @@ Tuple!(real[], real[][]) dopri(mfun fxy, real x0, real[] y0, real x1, real tol,
     return tuple(tout, yout);
 }
 
-unittest
+@("Dopri basic test")
+@safe unittest
 {
     real x0 = 0;
     real[] y0 = [1.0, 0.5, 2.0];
@@ -417,8 +425,6 @@ unittest
     // writeln(res[1]);
 }
 
-
 /*
 Runge-Kutta Cash-Karp
 */
-

@@ -4,6 +4,7 @@
 	],
 	"copyright": "Copyright © 2020, Flávio Codeco Coelho",
 	"dependencies": {
+		"silly": "~>1.0.2"
 	},
 	"description": "A prototype D Runge-kutta implementation with adaptive step sizes.",
 	"license": "gpl3",

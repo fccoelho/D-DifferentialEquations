@@ -1,3 +1,6 @@
+/**
+This executable contains some models for benchmarking pruposes.
+*/
 import std.stdio;
 import std.array;
 import std.algorithm;

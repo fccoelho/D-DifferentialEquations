@@ -10,7 +10,7 @@ import std.typecons : tuple, Tuple;
 import std.datetime.stopwatch;
 import std.string;
 
-/// Model function signature: F(t, y)
+/// Model function signature: F(t, y, args)
 alias mfun = real[]delegate(real, real[], real[]) pure nothrow @safe;
 
 /**

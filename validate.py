@@ -11,6 +11,8 @@ import pylab as P
 ## Generates the D solutions
 os.system('dub')
 
+## Python models
+
 def sir(Y, t, *pars):
     s,i,r = Y
     beta, gamma = pars
